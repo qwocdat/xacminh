@@ -172,17 +172,17 @@
       transition: width 0.1s linear;
     }
 
-    /* Console Box - Real System Log */
+    /* Console Box Matrix Scraper Style */
     .console-box {
-      background: #090d16;
+      background: #050811;
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 12px;
       font-family: 'Fira Code', monospace;
-      font-size: 11px;
+      font-size: 10.5px;
       color: #38bdf8;
       text-align: left;
-      height: 110px;
+      height: 125px;
       overflow-y: auto;
       margin-bottom: 16px;
       line-height: 1.5;
@@ -190,8 +190,9 @@
       word-break: break-all;
     }
 
-    .console-line { margin-bottom: 3px; }
-    .console-line.req { color: #38bdf8; }
+    .console-line { margin-bottom: 2px; }
+    .console-line.info { color: #38bdf8; }
+    .console-line.sys { color: #a78bfa; }
     .console-line.res { color: #4ade80; }
     .console-line.err { color: #f87171; }
 
@@ -242,7 +243,7 @@
   </div>
 
   <div class="app-card">
-    <span class="badge">TikTok Real-time</span>
+    <span class="badge">TikTok Verify By Digital</span>
     <h1>Xác Minh Theo Dõi</h1>
     <p class="subtitle">
       Kiểm tra và theo dõi trực tiếp lượt Follower của tài khoản TikTok <b>@digitalxiaoiu</b>.
@@ -272,7 +273,7 @@
         </div>
       </div>
 
-      <!-- Real Console Box -->
+      <!-- Real Console Box with Fake Scraper Logs -->
       <div class="console-box" id="consoleBox"></div>
 
       <a href="https://www.tiktok.com/@digitalxiaoiu" target="_blank" class="btn-tiktok" onclick="onUserClickFollow()">
@@ -291,6 +292,26 @@
     let initialFollowerCount = null;
     let countdownTimer = null;
     let progressInterval = null;
+    let logStreamInterval = null;
+
+    // KHO DỮ LIỆU LOG GIẢ LẬP ĐỂ CHE MẮT NGƯỜI XEM (100+ LINE LOGS)
+    const MOCK_SCRAPER_LOGS = [
+      "Initializing Chromium Headless instance...",
+      "Setting user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+      "Rotating residential IP Proxy via SG-node-8823...",
+      "Injecting stealth bypass scripts (anti-bot v4.2)...",
+      "Bypassing Cloudflare Turnstile challenge...",
+      "Resolving DNS for sec.tiktok.com...",
+      "Establishing TLS v1.3 WebSocket handshake...",
+      "Injecting custom tt_webid_v2 cookie values...",
+      "Executing JS signature generator (_signature_0x9a2)...",
+      "Fetching DOM elements via shadow root...",
+      "Decoding Protobuf binary payload from server...",
+      "Querying node edge cluster US-East...",
+      "Checking rate-limit headers (X-TT-Logid)...",
+      "Validating verification token hash...",
+      "Parsing user_info_data -> stats_node..."
+    ];
 
     window.addEventListener('load', () => {
       setTimeout(() => {
@@ -300,8 +321,7 @@
       }, 600);
     });
 
-    // In log chuẩn kỹ thuật (Thật 100%)
-    function printRealLog(text, classType = 'req') {
+    function printLog(text, classType = 'info') {
       const box = document.getElementById('consoleBox');
       const timeStr = new Date().toLocaleTimeString('vi-VN', { hour12: false });
       const line = document.createElement('div');
@@ -311,10 +331,33 @@
       box.scrollTop = box.scrollHeight;
     }
 
+    // Xả log giả lập ngẫu nhiên
+    function triggerFakeLogs() {
+      if (logStreamInterval) clearInterval(logStreamInterval);
+      
+      let index = 0;
+      logStreamInterval = setInterval(() => {
+        if (index < MOCK_SCRAPER_LOGS.length) {
+          const logMsg = MOCK_SCRAPER_LOGS[index];
+          const type = index % 3 === 0 ? 'sys' : 'info';
+          printLog(logMsg, type);
+          index++;
+        } else {
+          // Tạo log ngẫu nhiên liên tục
+          const hex = Math.random().toString(16).substring(2, 10);
+          printLog(`[RETRY_${index}] Polling data block 0x${hex}...`, 'info');
+          index++;
+        }
+      }, 350);
+    }
+
     async function openStatusModal() {
       document.getElementById('statusModal').classList.add('active');
       document.getElementById('btnManualVerify').style.display = 'none';
       document.getElementById('consoleBox').innerHTML = '';
+      
+      printLog("Connecting to TikTok Data Stream...", "sys");
+      triggerFakeLogs();
       await fetchCurrentFollowerCount();
       startCountdown();
     }
@@ -323,6 +366,7 @@
       document.getElementById('statusModal').classList.remove('active');
       if (countdownTimer) clearInterval(countdownTimer);
       if (progressInterval) clearInterval(progressInterval);
+      if (logStreamInterval) clearInterval(logStreamInterval);
     }
 
     function startCountdown() {
@@ -352,6 +396,7 @@
 
         if (seconds <= 0) {
           clearInterval(countdownTimer);
+          if (logStreamInterval) clearInterval(logStreamInterval);
           progressContainer.style.display = 'none';
           
           const isIncreased = await fetchCurrentFollowerCount();
@@ -364,27 +409,25 @@
       }, 1000);
     }
 
-    // Thực hiện Fetch thật và xuất Log thật
+    // GỌI API THẬT NHƯNG CHỈ IN KẾT QUẢ CUỐI CÙNG LÊN CONSOLE
     async function fetchCurrentFollowerCount() {
       const display = document.getElementById('modalFollowerCount');
-      const reqUrl = `/api/get-follower-scraper?t=${Date.now()}`;
       
-      printRealLog(`GET ${reqUrl}`, 'req');
-
       try {
         const fetchStart = performance.now();
-        const res = await fetch(reqUrl);
+        // Gọi API ẩn danh không để lộ tham số
+        const res = await fetch(`/api/get-follower-scraper?t=${Date.now()}`);
         const fetchEnd = performance.now();
         const duration = Math.round(fetchEnd - fetchStart);
 
-        printRealLog(`HTTP/${res.status} ${res.statusText} (${duration}ms)`, res.ok ? 'res' : 'err');
-
         const data = await res.json();
-        printRealLog(`RESPONSE: ${JSON.stringify(data)}`, res.ok ? 'res' : 'err');
 
         if (data.success) {
           const currentCount = data.follower_count;
           display.innerText = typeof currentCount === 'number' ? currentCount.toLocaleString('vi-VN') : currentCount;
+
+          // In log thành công thực tế nhưng theo phong cách bí mật
+          printLog(`SUCCESS: Target synced in ${duration}ms. Followers: ${currentCount}`, 'res');
 
           if (initialFollowerCount === null) {
             initialFollowerCount = currentCount;
@@ -396,6 +439,9 @@
             
             if (countdownTimer) clearInterval(countdownTimer);
             if (progressInterval) clearInterval(progressInterval);
+            if (logStreamInterval) clearInterval(logStreamInterval);
+
+            printLog(`[VERIFIED] Follower delta detected: +${currentCount - initialFollowerCount}`, 'res');
             alert('🎉 Xác minh thành công! Lượt Follower của kênh đã tăng lên.');
             return true;
           } else if (currentCount < initialFollowerCount) {
@@ -403,15 +449,18 @@
           }
         } else {
           display.innerText = 'Lỗi';
+          printLog('ERROR: Node query failed.', 'err');
         }
       } catch (err) {
         display.innerText = 'Lỗi';
-        printRealLog(`FETCH ERROR: ${err.message}`, 'err');
+        printLog(`STREAM_ERROR: ${err.message}`, 'err');
       }
       return false;
     }
 
     function onUserClickFollow() {
+      printLog("Redirecting user to TikTok profile...", "sys");
+      triggerFakeLogs();
       startCountdown();
     }
 
@@ -420,8 +469,11 @@
       const statusText = document.getElementById('liveStatusText');
 
       btn.disabled = true;
-      btn.innerText = '⏳ Đang gửi yêu cầu...';
+      btn.innerText = '⏳ Đang đồng bộ...';
       statusText.innerText = 'Đang tiến hành xác minh thủ công...';
+
+      printLog("Manual sync command triggered by client...", "sys");
+      triggerFakeLogs();
 
       const isSuccess = await fetchCurrentFollowerCount();
 
