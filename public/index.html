@@ -30,7 +30,7 @@
       padding: 20px;
     }
 
-    /* Loading Toan Man Hinh */
+    /* Loading Toàn Màn Hình */
     #page-loader {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -55,7 +55,7 @@
 
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Card Giao Dien Chinh */
+    /* Card Giao Diện Chính */
     .app-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -171,6 +171,23 @@
       display: inline-block;
     }
 
+    .btn-manual {
+      background: rgba(37, 244, 238, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(37, 244, 238, 0.3);
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      width: 100%;
+      margin-bottom: 12px;
+      cursor: pointer;
+      display: none; /* Ẩn ban đầu, chỉ hiện sau 10s */
+      transition: all 0.2s ease;
+    }
+
+    .btn-manual:hover { background: rgba(37, 244, 238, 0.2); }
+    .btn-manual:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .btn-close {
       background: transparent;
       color: var(--text-sub);
@@ -212,8 +229,8 @@
         <p style="font-size: 12px; color: var(--text-sub); font-weight: 600; text-transform: uppercase;">Số Follower Hiện Tại</p>
         <div class="stat-number" id="modalFollowerCount">---</div>
         <div class="live-indicator">
-          <span class="dot"></span>
-          <span id="liveStatusText">Sẵn sàng kiểm tra...</span>
+          <span class="dot" id="statusDot"></span>
+          <span id="liveStatusText">Đang kiểm tra dữ liệu...</span>
         </div>
       </div>
 
@@ -221,15 +238,21 @@
         👉 Chuyển đến TikTok để Follow
       </a>
 
+      <!-- Nút xác minh thủ công (Hiện ra sau 10s) -->
+      <button class="btn-manual" id="btnManualVerify" onclick="manualVerify()">
+        🔄 Gửi yêu cầu xác minh thủ công
+      </button>
+
       <button class="btn-close" onclick="closeModal()">Đóng cửa sổ</button>
     </div>
   </div>
 
   <script>
     let initialFollowerCount = null;
-    let pollingInterval = null;
+    let countdownTimer = null;
+    let secondsLeft = 10;
 
-    // Tat loader
+    // Tắt Loader khi nạp trang xong
     window.addEventListener('load', () => {
       setTimeout(() => {
         const loader = document.getElementById('page-loader');
@@ -238,16 +261,46 @@
       }, 600);
     });
 
+    // Mở Pop-up Modal
     async function openStatusModal() {
       document.getElementById('statusModal').classList.add('active');
+      document.getElementById('btnManualVerify').style.display = 'none';
       await fetchCurrentFollowerCount();
+      startCountdown();
     }
 
     function closeModal() {
       document.getElementById('statusModal').classList.remove('active');
-      if (pollingInterval) clearInterval(pollingInterval);
+      if (countdownTimer) clearInterval(countdownTimer);
     }
 
+    // Bắt đầu đếm ngược 10 giây
+    function startCountdown() {
+      if (countdownTimer) clearInterval(countdownTimer);
+      secondsLeft = 10;
+      const statusText = document.getElementById('liveStatusText');
+      const manualBtn = document.getElementById('btnManualVerify');
+      
+      manualBtn.style.display = 'none';
+
+      countdownTimer = setInterval(async () => {
+        secondsLeft--;
+        statusText.innerText = `Đang tự động kiểm tra... (${secondsLeft}s)`;
+
+        if (secondsLeft <= 0) {
+          clearInterval(countdownTimer);
+          // Thực hiện kiểm tra lượt follow lần nữa khi hết 10s
+          const isIncreased = await fetchCurrentFollowerCount();
+
+          if (!isIncreased) {
+            statusText.innerText = 'Chưa ghi nhận lượt follow mới.';
+            manualBtn.style.display = 'block'; // Hiện nút thủ công
+          }
+        }
+      }, 1000);
+    }
+
+    // Hàm lấy số follower từ hệ thống
     async function fetchCurrentFollowerCount() {
       const display = document.getElementById('modalFollowerCount');
       
@@ -262,10 +315,13 @@
           if (initialFollowerCount === null) {
             initialFollowerCount = currentCount;
           } else if (currentCount > initialFollowerCount) {
-            document.getElementById('liveStatusText').innerText = '🎉 Xác minh thành công! Số Follower đã tăng.';
+            // Xác minh thành công
+            document.getElementById('liveStatusText').innerText = '🎉 Xác minh thành công! Lượt Follower đã tăng.';
             document.getElementById('liveStatusText').style.color = '#4ade80';
-            alert('🎉 Xác minh thành công! Hệ thống ghi nhận lượt Follow mới.');
-            if (pollingInterval) clearInterval(pollingInterval);
+            document.getElementById('btnManualVerify').style.display = 'none';
+            if (countdownTimer) clearInterval(countdownTimer);
+            alert('🎉 Xác minh thành công! Hệ thống đã ghi nhận lượt Follow mới.');
+            return true;
           }
         } else {
           display.innerText = 'Lỗi';
@@ -274,12 +330,31 @@
         display.innerText = 'Lỗi';
         console.error(err);
       }
+      return false;
     }
 
+    // Khi bấm sang TikTok để Follow
     function onUserClickFollow() {
-      document.getElementById('liveStatusText').innerText = 'Đang tự động kiểm tra xem số Follower đã tăng chưa...';
-      if (pollingInterval) clearInterval(pollingInterval);
-      pollingInterval = setInterval(fetchCurrentFollowerCount, 8000);
+      startCountdown();
+    }
+
+    // Xác minh thủ công khi bấm nút
+    async function manualVerify() {
+      const btn = document.getElementById('btnManualVerify');
+      const statusText = document.getElementById('liveStatusText');
+
+      btn.disabled = true;
+      btn.innerText = '⏳ Đang kiểm tra hệ thống...';
+      statusText.innerText = 'Đang tiến hành xác minh thủ công...';
+
+      const isSuccess = await fetchCurrentFollowerCount();
+
+      if (!isSuccess) {
+        alert('Hệ thống chưa thấy số lượt Follower thay đổi. Vui lòng bấm Follow trên TikTok và thử lại sau ít phút.');
+      }
+
+      btn.disabled = false;
+      btn.innerText = '🔄 Gửi yêu cầu xác minh thủ công';
     }
   </script>
 
