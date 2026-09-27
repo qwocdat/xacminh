@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xác Minh Follow TikTok - @digitalxiaoiu</title>
+  <title>Xác Minh Theo Dõi TikTok - @digitalxiaoiu</title>
   
-  <!-- Cropper.js CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
@@ -33,7 +30,7 @@
       padding: 20px;
     }
 
-    /* Initial Page Loader */
+    /* Loading Toan Man Hinh */
     #page-loader {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -47,8 +44,8 @@
     }
 
     .spinner {
-      width: 50px;
-      height: 50px;
+      width: 44px;
+      height: 44px;
       border: 4px solid var(--border-color);
       border-top: 4px solid var(--accent-red);
       border-right: 4px solid var(--accent-cyan);
@@ -58,17 +55,16 @@
 
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Main Container */
+    /* Card Giao Dien Chinh */
     .app-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 24px;
       padding: 32px;
       width: 100%;
-      max-width: 480px;
+      max-width: 440px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
       text-align: center;
-      position: relative;
     }
 
     .badge {
@@ -86,31 +82,6 @@
     h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
     p.subtitle { color: var(--text-sub); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
 
-    /* Upload Area */
-    .upload-zone {
-      border: 2px dashed var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      background: rgba(15, 23, 42, 0.5);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 20px;
-    }
-
-    .upload-zone:hover { border-color: var(--accent-cyan); background: rgba(37, 244, 238, 0.05); }
-
-    .crop-container {
-      width: 100%;
-      max-height: 320px;
-      overflow: hidden;
-      border-radius: 12px;
-      display: none;
-      margin-bottom: 20px;
-    }
-
-    .crop-container img { max-width: 100%; }
-
-    /* Buttons */
     .btn-main {
       background: linear-gradient(135deg, var(--accent-red), #e11d48);
       color: white;
@@ -123,14 +94,9 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 8px 20px rgba(254, 44, 85, 0.3);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
     }
 
     .btn-main:hover { transform: translateY(-2deg); box-shadow: 0 12px 24px rgba(254, 44, 85, 0.4); }
-    .btn-main:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
     /* Pop-up Modal */
     .modal-overlay {
@@ -155,13 +121,9 @@
       border-radius: 24px;
       padding: 32px;
       width: 90%;
-      max-width: 420px;
+      max-width: 400px;
       text-align: center;
-      transform: scale(0.9);
-      transition: transform 0.3s ease;
     }
-
-    .modal-overlay.active .modal-card { transform: scale(1); }
 
     .stat-box {
       background: rgba(15, 23, 42, 0.6);
@@ -221,34 +183,26 @@
 </head>
 <body>
 
-  <!-- Fullscreen Initial Loader -->
+  <!-- Screen Loader -->
   <div id="page-loader">
     <div class="spinner"></div>
-    <p style="margin-top: 16px; color: var(--text-sub); font-size: 14px;">Đang khởi tạo hệ thống...</p>
+    <p style="margin-top: 16px; color: var(--text-sub); font-size: 14px;">Đang khởi tạo dữ liệu...</p>
   </div>
 
   <!-- Main App Card -->
   <div class="app-card">
-    <span class="badge">TikTok Verification</span>
+    <span class="badge">TikTok Real-time</span>
     <h1>Xác Minh Theo Dõi</h1>
-    <p class="subtitle">Tải lên ảnh chụp màn hình hồ sơ TikTok <b>@digitalxiaoiu</b> để nhận diện bằng AI và kiểm tra số dư Follower.</p>
+    <p class="subtitle">
+      Kiểm tra và theo dõi trực tiếp lượt Follower của tài khoản TikTok <b>@digitalxiaoiu</b>.
+    </p>
 
-    <div class="upload-zone" onclick="document.getElementById('imageInput').click()">
-      <p style="font-weight: 600; color: var(--text-main);">📸 Nhấp vào đây để chọn ảnh chụp màn hình</p>
-      <p style="font-size: 12px; color: var(--text-sub); margin-top: 6px;">Hỗ trợ định dạng PNG, JPG, WEBP</p>
-      <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
-    </div>
-
-    <div class="crop-container" id="cropBox">
-      <img id="imageToCrop" src="" alt="Ảnh cắt">
-    </div>
-
-    <button class="btn-main" id="btnSubmit" onclick="startVerification()">
-      <span>Bắt đầu xác minh ngay</span>
+    <button class="btn-main" onclick="openStatusModal()">
+      <span>Mở bảng kiểm tra Follower</span>
     </button>
   </div>
 
-  <!-- Pop-up Modal Live Tracker -->
+  <!-- Pop-up Modal -->
   <div class="modal-overlay" id="statusModal">
     <div class="modal-card">
       <h2 style="font-size: 20px;">Trạng Thái Kênh TikTok</h2>
@@ -259,7 +213,7 @@
         <div class="stat-number" id="modalFollowerCount">---</div>
         <div class="live-indicator">
           <span class="dot"></span>
-          <span id="liveStatusText">Đang tự động theo dõi biến động...</span>
+          <span id="liveStatusText">Sẵn sàng kiểm tra...</span>
         </div>
       </div>
 
@@ -271,15 +225,11 @@
     </div>
   </div>
 
-  <!-- Cropper.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
   <script>
-    let cropper = null;
     let initialFollowerCount = null;
     let pollingInterval = null;
 
-    // Tắt Loader khi trang web nạp xong
+    // Tat loader
     window.addEventListener('load', () => {
       setTimeout(() => {
         const loader = document.getElementById('page-loader');
@@ -288,79 +238,8 @@
       }, 600);
     });
 
-    // Xử lý khi người dùng chọn ảnh
-    function handleImageSelect(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.getElementById('imageToCrop');
-        img.src = e.target.result;
-        document.getElementById('cropBox').style.display = 'block';
-
-        if (cropper) cropper.destroy();
-        cropper = new Cropper(img, {
-          aspectRatio: NaN,
-          viewMode: 1,
-          autoCropArea: 0.9,
-          background: false
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // Bắt đầu quá trình xác minh (Gửi Base64 HD tới AI Vision)
-    async function startVerification() {
-      if (!cropper) {
-        alert('Vui lòng chọn ảnh chụp màn hình TikTok trước!');
-        return;
-      }
-
-      const btn = document.getElementById('btnSubmit');
-      btn.disabled = true;
-      btn.innerHTML = `<div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div> Đang phân tích pixel...`;
-
-      try {
-        // Cắt ảnh chất lượng HD 100% không vỡ
-        const canvas = cropper.getCroppedCanvas();
-        const base64Image = canvas.toDataURL('image/jpeg', 1.0);
-
-        const response = await fetch('/api/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64Image })
-        });
-
-        const result = await response.json();
-
-        if (result.success && result.data) {
-          const { is_correct_account, is_following, reason } = result.data;
-          
-          if (is_correct_account && is_following) {
-            alert('🎉 Xác minh thành công! Bạn đã follow tài khoản @digitalxiaoiu.');
-          } else {
-            alert(`⚠️ Chưa hoàn tất xác minh: ${reason}`);
-            // Mở Modal hiển thị số follower thời gian thực
-            openStatusModal();
-          }
-        } else {
-          alert('Không thể nhận diện hình ảnh. Vui lòng thử lại.');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Lỗi kết nối tới máy chủ AI.');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>Bắt đầu xác minh ngay</span>`;
-      }
-    }
-
-    // Mở Pop-up Modal và lấy số Follower hiện tại qua RapidAPI Scraper
     async function openStatusModal() {
-      const modal = document.getElementById('statusModal');
-      modal.classList.add('active');
-      
+      document.getElementById('statusModal').classList.add('active');
       await fetchCurrentFollowerCount();
     }
 
@@ -369,7 +248,6 @@
       if (pollingInterval) clearInterval(pollingInterval);
     }
 
-    // Lấy số follower từ RapidAPI Scraper
     async function fetchCurrentFollowerCount() {
       const display = document.getElementById('modalFollowerCount');
       
@@ -384,28 +262,24 @@
           if (initialFollowerCount === null) {
             initialFollowerCount = currentCount;
           } else if (currentCount > initialFollowerCount) {
-            // Phát hiện số follower đã tăng!
-            document.getElementById('liveStatusText').innerText = '🎉 Đã xác nhận số Follower tăng thành công!';
+            document.getElementById('liveStatusText').innerText = '🎉 Xác minh thành công! Số Follower đã tăng.';
             document.getElementById('liveStatusText').style.color = '#4ade80';
-            alert('🎉 Xác minh thành công! Số lượng Follower của kênh đã tăng lên.');
+            alert('🎉 Xác minh thành công! Hệ thống ghi nhận lượt Follow mới.');
             if (pollingInterval) clearInterval(pollingInterval);
           }
+        } else {
+          display.innerText = 'Lỗi';
         }
       } catch (err) {
-        console.error('Lỗi lấy số follower:', err);
+        display.innerText = 'Lỗi';
+        console.error(err);
       }
     }
 
-    // Khi người dùng bấm nút sang TikTok follow, kích hoạt cơ chế liên tục theo dõi (Live Polling)
     function onUserClickFollow() {
-      document.getElementById('liveStatusText').innerText = 'Đang theo dõi số Follower tăng lên...';
-      
+      document.getElementById('liveStatusText').innerText = 'Đang tự động kiểm tra xem số Follower đã tăng chưa...';
       if (pollingInterval) clearInterval(pollingInterval);
-      
-      // Kiểm tra lại mỗi 8 giây một lần
-      pollingInterval = setInterval(() => {
-        fetchCurrentFollowerCount();
-      }, 8000);
+      pollingInterval = setInterval(fetchCurrentFollowerCount, 8000);
     }
   </script>
 
