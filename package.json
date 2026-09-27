@@ -1,9 +1,11 @@
 {
-  "name": "tiktok-verifier",
+  "name": "xacminh-tiktok",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "start": "node api/get-follower-scraper.js"
+  },
   "dependencies": {
-    "axios": "^1.6.8",
-    "sharp": "^0.33.3"
+    "axios": "^1.6.8"
   }
 }
