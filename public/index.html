@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xac Minh Follow TikTok @digitalxiaoiu</title>
+  
+  <!-- CSS CropperJS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
@@ -18,8 +22,8 @@
     .upload-box:hover { border-color: #fe2c55; }
     input[type="file"] { display: none; }
     
-    .preview-container { margin-top: 15px; display: none; }
-    .preview-container img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+    .crop-container { margin-top: 15px; display: none; max-height: 400px; overflow: hidden; }
+    .crop-container img { max-width: 100%; display: block; }
     
     .status-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: default; }
     .btn-verify { background-color: #1677ff; color: white; cursor: pointer; }
@@ -27,6 +31,7 @@
     .btn-following { background-color: #25c974; color: white; }
     .btn-not-following { background-color: #fe2c55; color: white; }
     .loading { display: none; margin-top: 10px; color: #888; font-size: 14px; }
+    .instruction { font-size: 12px; color: #555; margin-bottom: 8px; font-weight: bold; display: none; }
   </style>
 </head>
 <body>
@@ -44,9 +49,9 @@
     <input type="file" id="screenshotInput" accept="image/*" onchange="handleFileSelect(event)">
   </div>
 
-  <div class="preview-container" id="previewContainer">
-    <p style="margin-bottom: 5px; font-weight: bold; font-size: 12px; color: #555;">Xem truuoc anh phan Profile:</p>
-    <img id="imagePreview" src="" alt="Preview">
+  <div class="instruction" id="instructionText">Ban co the keo hoac chinh lai khung vuong cho dung phan Profile:</div>
+  <div class="crop-container" id="cropContainer">
+    <img id="imageToCrop" src="" alt="Crop Target">
   </div>
 
   <button id="actionBtn" class="status-btn btn-verify" onclick="submitVerification()" disabled>
@@ -56,8 +61,11 @@
   <div class="loading" id="loadingText">Dang phan tich anh bang Gemma 3 27B IT, vui long cho...</div>
 </div>
 
+<!-- JS CropperJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <script>
-  let rawBase64 = null;
+  let cropper = null;
 
   function handleFileSelect(event) {
     const file = event.target.files[0];
@@ -67,10 +75,27 @@
 
     const reader = new FileReader();
     reader.onload = function(e) {
-      rawBase64 = e.target.result;
+      const imageElement = document.getElementById('imageToCrop');
+      imageElement.src = e.target.result;
 
-      document.getElementById('imagePreview').src = rawBase64;
-      document.getElementById('previewContainer').style.display = 'block';
+      document.getElementById('cropContainer').style.display = 'block';
+      document.getElementById('instructionText').style.display = 'block';
+
+      // Huy Cropper cu neu da khoi tao truoc do
+      if (cropper) {
+        cropper.destroy();
+      }
+
+      // Khoi tao Cropper.js voi khung vuong (aspectRatio = 1)
+      cropper = new Cropper(imageElement, {
+        aspectRatio: 1, // Bat buoc la hình vuong
+        viewMode: 1,
+        autoCropArea: 0.8, // Tu dong tao khung cat phan tren
+        responsive: true,
+        background: false,
+        zoomable: true,
+        scalable: false
+      });
 
       const actionBtn = document.getElementById('actionBtn');
       actionBtn.disabled = false;
@@ -81,7 +106,7 @@
   }
 
   async function submitVerification() {
-    if (!rawBase64) return;
+    if (!cropper) return;
 
     const actionBtn = document.getElementById('actionBtn');
     const loadingText = document.getElementById('loadingText');
@@ -89,13 +114,21 @@
     actionBtn.disabled = true;
     loadingText.style.display = 'block';
 
+    // Lay anh va resize ve kieu vuong 600x600 toi uu dung luong
+    const canvas = cropper.getCroppedCanvas({
+      width: 600,
+      height: 600
+    });
+
+    const croppedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
     try {
       const response = await fetch('/api/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ imageBase64: rawBase64 })
+        body: JSON.stringify({ imageBase64: croppedBase64 })
       });
 
       const resData = await response.json();
