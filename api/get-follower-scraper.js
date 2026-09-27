@@ -1,10 +1,10 @@
 const axios = require('axios');
 
 module.exports = async function handler(req, res) {
-  // Cấu hình CORS
+  // Cau hinh CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  // Lưu Cache trên Vercel 5 phút (300 giây) để tiết kiệm 300 lượt gọi/tháng
+  // Cache Vercel 5 phut de tiet kiem request RapidAPI
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
 
   if (req.method === 'OPTIONS') {
@@ -14,7 +14,6 @@ module.exports = async function handler(req, res) {
   try {
     const username = 'digitalxiaoiu';
 
-    // Gọi API lấy thông tin profile của TIKWM trên RapidAPI
     const options = {
       method: 'GET',
       url: 'https://tiktok-scraper7.p.rapidapi.com/user/info',
@@ -28,7 +27,7 @@ module.exports = async function handler(req, res) {
     const response = await axios.request(options);
     const apiData = response.data;
 
-    // Bóc tách số lượng follower từ cấu trúc JSON trả về
+    // Boc tach so follower tu JSON cua TIKWM
     const followerCount = apiData?.data?.user?.fans ?? apiData?.data?.stats?.followerCount;
 
     if (followerCount !== undefined && followerCount !== null) {
@@ -41,12 +40,12 @@ module.exports = async function handler(req, res) {
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Khong tim thấy thong tin follower trong phan hoi API.'
+        message: 'Khong tim thay du lieu follower.'
       });
     }
 
   } catch (error) {
-    console.error('Loi khi goi RapidAPI:', error?.response?.data || error.message);
+    console.error('Loi RapidAPI:', error?.response?.data || error.message);
     return res.status(500).json({
       success: false,
       message: 'Loi ket noi den RapidAPI Scraper.'
