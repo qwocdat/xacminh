@@ -1,11 +1,15 @@
 const axios = require('axios');
 
 module.exports = async function handler(req, res) {
+  const startTime = Date.now();
+
   // Cau hinh CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  // Cache Vercel 5 phut de tiet kiem request RapidAPI
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
+  // TAT CACHE HOAN TOAN: Ep lay du lieu thoi gian thuc 100%
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -26,8 +30,8 @@ module.exports = async function handler(req, res) {
 
     const response = await axios.request(options);
     const apiData = response.data;
+    const executionTime = Date.now() - startTime;
 
-    // Boc tach so follower tu JSON cua TIKWM
     const followerCount = apiData?.data?.user?.fans ?? apiData?.data?.stats?.followerCount;
 
     if (followerCount !== undefined && followerCount !== null) {
@@ -35,20 +39,24 @@ module.exports = async function handler(req, res) {
         success: true,
         username: username,
         follower_count: followerCount,
-        formatted_count: followerCount >= 1000 ? (followerCount / 1000).toFixed(1) + 'K' : followerCount.toString()
+        latency_ms: executionTime,
+        timestamp: Date.now()
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Khong tim thay du lieu follower.'
+        message: 'Khong tim thay du lieu follower.',
+        latency_ms: executionTime
       });
     }
 
   } catch (error) {
+    const executionTime = Date.now() - startTime;
     console.error('Loi RapidAPI:', error?.response?.data || error.message);
     return res.status(500).json({
       success: false,
-      message: 'Loi ket noi den RapidAPI Scraper.'
+      message: 'Loi ket noi den RapidAPI Scraper.',
+      latency_ms: executionTime
     });
   }
 };
