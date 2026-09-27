@@ -3,264 +3,411 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xac Minh Follow TikTok @digitalxiaoiu</title>
-
-  <!-- CSS CropperJS -->
+  <title>Xác Minh Follow TikTok - @digitalxiaoiu</title>
+  
+  <!-- Cropper.js CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
-    .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 450px; text-align: center; }
-    h2 { color: #0f172a; margin-bottom: 8px; font-size: 22px; font-weight: 700; }
-    p { color: #475569; font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent-red: #fe2c55;
+      --accent-cyan: #25f4ee;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
     
-    .btn-tiktok { background-color: #fe2c55; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; width: 100%; margin-bottom: 15px; font-size: 15px; }
-    .btn-tiktok:hover { background-color: #e02649; }
-    
-    .upload-box { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 18px; cursor: pointer; margin-bottom: 15px; background: #f1f5f9; }
-    .upload-box:hover { border-color: #2563eb; }
-    input[type="file"] { display: none; }
-    
-    /* Vùng chứa khung Crop được tối ưu độ rộng */
-    .crop-container { margin-top: 10px; display: none; width: 100%; max-height: 380px; overflow: hidden; border-radius: 8px; border: 1px solid #cbd5e1; }
-    .crop-container img { max-width: 100%; display: block; }
-    
-    .status-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; margin-top: 15px; cursor: default; }
-    .btn-verify { background-color: #2563eb; color: white; cursor: pointer; }
-    .btn-verify:disabled { background-color: #94a3b8; cursor: not-allowed; }
-    .btn-following { background-color: #10b981; color: white; }
-    .btn-not-following { background-color: #ef4444; color: white; }
-    
-    .progress-container { width: 100%; background: #e2e8f0; border-radius: 8px; height: 8px; margin-top: 12px; overflow: hidden; display: none; }
-    .progress-bar { width: 0%; height: 100%; background: #2563eb; transition: width 0.1s linear; }
-    .status-text { margin-top: 8px; font-size: 13px; font-weight: 600; color: #334155; }
-    .instruction { font-size: 12px; color: #2563eb; margin-top: 10px; font-weight: 600; display: none; text-align: left; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Initial Page Loader */
+    #page-loader {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease, visibility 0.5s;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border-color);
+      border-top: 4px solid var(--accent-red);
+      border-right: 4px solid var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Main Container */
+    .app-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      text-align: center;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(254, 44, 85, 0.15);
+      color: var(--accent-red);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      border: 1px solid rgba(254, 44, 85, 0.3);
+    }
+
+    h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    p.subtitle { color: var(--text-sub); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+
+    /* Upload Area */
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.5);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    .upload-zone:hover { border-color: var(--accent-cyan); background: rgba(37, 244, 238, 0.05); }
+
+    .crop-container {
+      width: 100%;
+      max-height: 320px;
+      overflow: hidden;
+      border-radius: 12px;
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    .crop-container img { max-width: 100%; }
+
+    /* Buttons */
+    .btn-main {
+      background: linear-gradient(135deg, var(--accent-red), #e11d48);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 20px rgba(254, 44, 85, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-main:hover { transform: translateY(-2deg); box-shadow: 0 12px 24px rgba(254, 44, 85, 0.4); }
+    .btn-main:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Pop-up Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card { transform: scale(1); }
+
+    .stat-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .stat-number {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      margin-top: 4px;
+    }
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #4ade80;
+      margin-top: 10px;
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .btn-tiktok {
+      background: #000;
+      color: white;
+      border: 1px solid var(--border-color);
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      width: 100%;
+      margin-bottom: 12px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-close {
+      background: transparent;
+      color: var(--text-sub);
+      border: none;
+      padding: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Xac Minh Follow TikTok</h2>
-  <p>Nhan vao nut ben duoi de den trang TikTok <b>@digitalxiaoiu</b>, tien hanh Follow va chup lai man hinh.</p>
-
-  <a href="https://www.tiktok.com/@digitalxiaoiu" target="_blank" class="btn-tiktok">
-    Den trang TikTok @digitalxiaoiu
-  </a>
-
-  <div class="upload-box" onclick="document.getElementById('screenshotInput').click()">
-    <span id="uploadText">Bam vao dey de tai anh chup man hinh</span>
-    <input type="file" id="screenshotInput" accept="image/*" onchange="handleFileSelect(event)">
+  <!-- Fullscreen Initial Loader -->
+  <div id="page-loader">
+    <div class="spinner"></div>
+    <p style="margin-top: 16px; color: var(--text-sub); font-size: 14px;">Đang khởi tạo hệ thống...</p>
   </div>
 
-  <div class="instruction" id="instructionText">Keo cac goc de chinh khung CHU NHAT bao tron phan Profile:</div>
-  <div class="crop-container" id="cropContainer">
-    <img id="imageToCrop" src="" alt="Crop Target">
+  <!-- Main App Card -->
+  <div class="app-card">
+    <span class="badge">TikTok Verification</span>
+    <h1>Xác Minh Theo Dõi</h1>
+    <p class="subtitle">Tải lên ảnh chụp màn hình hồ sơ TikTok <b>@digitalxiaoiu</b> để nhận diện bằng AI và kiểm tra số dư Follower.</p>
+
+    <div class="upload-zone" onclick="document.getElementById('imageInput').click()">
+      <p style="font-weight: 600; color: var(--text-main);">📸 Nhấp vào đây để chọn ảnh chụp màn hình</p>
+      <p style="font-size: 12px; color: var(--text-sub); margin-top: 6px;">Hỗ trợ định dạng PNG, JPG, WEBP</p>
+      <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+    </div>
+
+    <div class="crop-container" id="cropBox">
+      <img id="imageToCrop" src="" alt="Ảnh cắt">
+    </div>
+
+    <button class="btn-main" id="btnSubmit" onclick="startVerification()">
+      <span>Bắt đầu xác minh ngay</span>
+    </button>
   </div>
 
-  <button id="actionBtn" class="status-btn btn-verify" onclick="submitVerification()" disabled>
-    Xac minh ngay
-  </button>
-  
-  <div class="progress-container" id="progressContainer">
-    <div class="progress-bar" id="progressBar"></div>
+  <!-- Pop-up Modal Live Tracker -->
+  <div class="modal-overlay" id="statusModal">
+    <div class="modal-card">
+      <h2 style="font-size: 20px;">Trạng Thái Kênh TikTok</h2>
+      <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">Tài khoản: <b>@digitalxiaoiu</b></p>
+
+      <div class="stat-box">
+        <p style="font-size: 12px; color: var(--text-sub); font-weight: 600; text-transform: uppercase;">Số Follower Hiện Tại</p>
+        <div class="stat-number" id="modalFollowerCount">---</div>
+        <div class="live-indicator">
+          <span class="dot"></span>
+          <span id="liveStatusText">Đang tự động theo dõi biến động...</span>
+        </div>
+      </div>
+
+      <a href="https://www.tiktok.com/@digitalxiaoiu" target="_blank" class="btn-tiktok" onclick="onUserClickFollow()">
+        👉 Chuyển đến TikTok để Follow
+      </a>
+
+      <button class="btn-close" onclick="closeModal()">Đóng cửa sổ</button>
+    </div>
   </div>
-  <div class="status-text" id="statusText"></div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <!-- Cropper.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
-<script>
-  const API_URL = "https://api-upload.digitalsmod.workers.dev";
-  let cropper = null;
+  <script>
+    let cropper = null;
+    let initialFollowerCount = null;
+    let pollingInterval = null;
 
-  function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    document.getElementById('uploadText').innerText = 'Da chon: ' + file.name;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const imageElement = document.getElementById('imageToCrop');
-      imageElement.src = e.target.result;
-
-      document.getElementById('cropContainer').style.display = 'block';
-      document.getElementById('instructionText').style.display = 'block';
-
-      if (cropper) {
-        cropper.destroy();
-      }
-
-      // Khoi tao Cropper ho tro hinh CHU NHAT linh hoat va khong bi ghen ty le
-      cropper = new Cropper(imageElement, {
-        aspectRatio: NaN, // Chế độ TỰ DO (Free Crop), kéo thành hình chữ nhật tùy ý
-        viewMode: 1,      // Giới hạn khung nằm gọn trong ảnh
-        autoCropArea: 0.6, // Tự động chọn 60% vùng trên của ảnh (Đúng vùng Profile)
-        responsive: true,
-        background: false,
-        zoomable: true,
-        ready() {
-          // Tự động căn chỉnh khung hình chữ nhật nằm gọn phần trên Profile
-          const containerData = cropper.getContainerData();
-          cropper.setCropBoxData({
-            left: containerData.width * 0.05,
-            top: containerData.height * 0.05,
-            width: containerData.width * 0.9,
-            height: containerData.height * 0.45 // Lấy đúng chiều cao phần thông tin profile
-          });
-        }
-      });
-
-      const actionBtn = document.getElementById('actionBtn');
-      actionBtn.disabled = false;
-      actionBtn.className = 'status-btn btn-verify';
-      actionBtn.innerText = 'Xac minh ngay';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  // Hàm quét tự động lấy URL ảnh từ phản hồi của Worker R2
-  function extractImageUrlFromResponse(data) {
-    if (!data) return null;
-    if (typeof data === 'string' && data.startsWith('http')) return data;
-    
-    // Tìm các trường biến phổ biến
-    const possibleKeys = ['fileUrl', 'url', 'externalUrl', 'file_url', 'imageUrl', 'link', 'key', 'path'];
-    for (let key of possibleKeys) {
-      if (data[key] && typeof data[key] === 'string') {
-        if (data[key].startsWith('http')) return data[key];
-        // Nếu chỉ trả về filename/key thì ghép thành URL hoàn chỉnh
-        return `${API_URL}/${data[key]}`;
-      }
-    }
-    
-    // Nếu dữ liệu nằm trong data object con (data.data)
-    if (data.data) return extractImageUrlFromResponse(data.data);
-    
-    return null;
-  }
-
-  async function submitVerification() {
-    if (!cropper) return;
-
-    const actionBtn = document.getElementById('actionBtn');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
-    const statusText = document.getElementById('statusText');
-
-    actionBtn.disabled = true;
-    progressContainer.style.display = 'block';
-    progressBar.style.width = '0%';
-    statusText.style.color = '#2563eb';
-    statusText.textContent = 'Dang xu ly va cat anh...';
-
-    // Cắt ảnh theo khung hình chữ nhật đã chọn
-    const canvas = cropper.getCroppedCanvas({
-      maxWidth: 800,
-      maxHeight: 800
+    // Tắt Loader khi trang web nạp xong
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loader = document.getElementById('page-loader');
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.visibility = 'hidden', 500);
+      }, 600);
     });
 
-    canvas.toBlob(function(blob) {
-      if (!blob) {
-        alert('Loi xu ly anh.');
-        actionBtn.disabled = false;
+    // Xử lý khi người dùng chọn ảnh
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById('imageToCrop');
+        img.src = e.target.result;
+        document.getElementById('cropBox').style.display = 'block';
+
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(img, {
+          aspectRatio: NaN,
+          viewMode: 1,
+          autoCropArea: 0.9,
+          background: false
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Bắt đầu quá trình xác minh (Gửi Base64 HD tới AI Vision)
+    async function startVerification() {
+      if (!cropper) {
+        alert('Vui lòng chọn ảnh chụp màn hình TikTok trước!');
         return;
       }
 
-      const formData = new FormData();
-      formData.append("name", "Xac minh TikTok " + Date.now());
-      formData.append("file", blob, "tiktok_verify.jpg");
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div> Đang phân tích pixel...`;
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${API_URL}/upload`, true);
+      try {
+        // Cắt ảnh chất lượng HD 100% không vỡ
+        const canvas = cropper.getCroppedCanvas();
+        const base64Image = canvas.toDataURL('image/jpeg', 1.0);
 
-      xhr.upload.onprogress = function(event) {
-        if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100);
-          progressBar.style.width = percentComplete + "%";
-          if (percentComplete < 100) {
-            statusText.textContent = `Dang upload len R2... ${percentComplete}%`;
+        const response = await fetch('/api/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Image })
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const { is_correct_account, is_following, reason } = result.data;
+          
+          if (is_correct_account && is_following) {
+            alert('🎉 Xác minh thành công! Bạn đã follow tài khoản @digitalxiaoiu.');
           } else {
-            statusText.textContent = 'Dang phan tich bang Gemma 3 27B IT...';
+            alert(`⚠️ Chưa hoàn tất xác minh: ${reason}`);
+            // Mở Modal hiển thị số follower thời gian thực
+            openStatusModal();
           }
-        }
-      };
-
-      xhr.onload = async function() {
-        let responseJson = null;
-        try {
-          responseJson = JSON.parse(xhr.responseText);
-        } catch (_) {}
-
-        console.log("Response tu R2 Worker:", responseJson);
-
-        if (xhr.status >= 200 && xhr.status < 300) {
-          // Tự động tìm URL ảnh trong kết quả trả về
-          const uploadedImageUrl = extractImageUrlFromResponse(responseJson);
-
-          if (!uploadedImageUrl) {
-            statusText.style.color = '#ef4444';
-            statusText.textContent = 'Khong tim thay URL anh tren R2!';
-            actionBtn.disabled = false;
-            return;
-          }
-
-          // Gửi URL R2 sang Backend Vercel để AI phân tích
-          try {
-            const verifyRes = await fetch('/api/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imageUrl: uploadedImageUrl })
-            });
-
-            const verifyData = await verifyRes.json();
-            progressContainer.style.display = 'none';
-
-            if (verifyData.success && verifyData.data) {
-              const { is_correct_account, is_following, reason } = verifyData.data;
-
-              if (is_correct_account && is_following) {
-                actionBtn.className = 'status-btn btn-following';
-                actionBtn.innerText = 'DA FOLLOW';
-                statusText.style.color = '#10b981';
-                statusText.textContent = 'Xac minh thanh cong!';
-              } else {
-                actionBtn.className = 'status-btn btn-not-following';
-                actionBtn.innerText = 'CHUA FOLLOW';
-                statusText.style.color = '#ef4444';
-                statusText.textContent = 'Xac minh thất bại.';
-                alert('Chua hoan thanh xac minh: ' + reason);
-              }
-            } else {
-              alert(verifyData.message || 'Loi phan tich anh.');
-              actionBtn.disabled = false;
-            }
-          } catch (err) {
-            statusText.style.color = '#ef4444';
-            statusText.textContent = 'Loi ket noi xac minh AI.';
-            actionBtn.disabled = false;
-          }
-
         } else {
-          const errorMsg = (responseJson && responseJson.message) ? responseJson.message : 'Upload R2 thất bại';
-          statusText.style.color = '#ef4444';
-          statusText.textContent = `Loi Upload [${xhr.status}]: ${errorMsg}`;
-          actionBtn.disabled = false;
+          alert('Không thể nhận diện hình ảnh. Vui lòng thử lại.');
         }
-      };
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối tới máy chủ AI.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Bắt đầu xác minh ngay</span>`;
+      }
+    }
 
-      xhr.onerror = function() {
-        statusText.style.color = '#ef4444';
-        statusText.textContent = 'Loi ket noi den server Cloudflare R2!';
-        actionBtn.disabled = false;
-      };
+    // Mở Pop-up Modal và lấy số Follower hiện tại qua RapidAPI Scraper
+    async function openStatusModal() {
+      const modal = document.getElementById('statusModal');
+      modal.classList.add('active');
+      
+      await fetchCurrentFollowerCount();
+    }
 
-      xhr.send(formData);
+    function closeModal() {
+      document.getElementById('statusModal').classList.remove('active');
+      if (pollingInterval) clearInterval(pollingInterval);
+    }
 
-    }, 'image/jpeg', 0.85);
-  }
-</script>
+    // Lấy số follower từ RapidAPI Scraper
+    async function fetchCurrentFollowerCount() {
+      const display = document.getElementById('modalFollowerCount');
+      
+      try {
+        const res = await fetch('/api/get-follower-scraper');
+        const data = await res.json();
+
+        if (data.success) {
+          const currentCount = data.follower_count;
+          display.innerText = typeof currentCount === 'number' ? currentCount.toLocaleString('vi-VN') : currentCount;
+
+          if (initialFollowerCount === null) {
+            initialFollowerCount = currentCount;
+          } else if (currentCount > initialFollowerCount) {
+            // Phát hiện số follower đã tăng!
+            document.getElementById('liveStatusText').innerText = '🎉 Đã xác nhận số Follower tăng thành công!';
+            document.getElementById('liveStatusText').style.color = '#4ade80';
+            alert('🎉 Xác minh thành công! Số lượng Follower của kênh đã tăng lên.');
+            if (pollingInterval) clearInterval(pollingInterval);
+          }
+        }
+      } catch (err) {
+        console.error('Lỗi lấy số follower:', err);
+      }
+    }
+
+    // Khi người dùng bấm nút sang TikTok follow, kích hoạt cơ chế liên tục theo dõi (Live Polling)
+    function onUserClickFollow() {
+      document.getElementById('liveStatusText').innerText = 'Đang theo dõi số Follower tăng lên...';
+      
+      if (pollingInterval) clearInterval(pollingInterval);
+      
+      // Kiểm tra lại mỗi 8 giây một lần
+      pollingInterval = setInterval(() => {
+        fetchCurrentFollowerCount();
+      }, 8000);
+    }
+  </script>
 
 </body>
 </html>
