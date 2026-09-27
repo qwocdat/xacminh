@@ -11,18 +11,19 @@
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
-    .card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 450px; text-align: center; }
+    .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 450px; text-align: center; }
     h2 { color: #0f172a; margin-bottom: 8px; font-size: 22px; font-weight: 700; }
-    p { color: #475569; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+    p { color: #475569; font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
     
     .btn-tiktok { background-color: #fe2c55; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; width: 100%; margin-bottom: 15px; font-size: 15px; }
     .btn-tiktok:hover { background-color: #e02649; }
     
-    .upload-box { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; cursor: pointer; margin-bottom: 15px; background: #f1f5f9; }
+    .upload-box { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 18px; cursor: pointer; margin-bottom: 15px; background: #f1f5f9; }
     .upload-box:hover { border-color: #2563eb; }
     input[type="file"] { display: none; }
     
-    .crop-container { margin-top: 15px; display: none; max-height: 400px; overflow: hidden; }
+    /* Vùng chứa khung Crop được tối ưu độ rộng */
+    .crop-container { margin-top: 10px; display: none; width: 100%; max-height: 380px; overflow: hidden; border-radius: 8px; border: 1px solid #cbd5e1; }
     .crop-container img { max-width: 100%; display: block; }
     
     .status-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; margin-top: 15px; cursor: default; }
@@ -34,7 +35,7 @@
     .progress-container { width: 100%; background: #e2e8f0; border-radius: 8px; height: 8px; margin-top: 12px; overflow: hidden; display: none; }
     .progress-bar { width: 0%; height: 100%; background: #2563eb; transition: width 0.1s linear; }
     .status-text { margin-top: 8px; font-size: 13px; font-weight: 600; color: #334155; }
-    .instruction { font-size: 12px; color: #475569; margin-bottom: 8px; font-weight: 600; display: none; }
+    .instruction { font-size: 12px; color: #2563eb; margin-top: 10px; font-weight: 600; display: none; text-align: left; }
   </style>
 </head>
 <body>
@@ -52,7 +53,7 @@
     <input type="file" id="screenshotInput" accept="image/*" onchange="handleFileSelect(event)">
   </div>
 
-  <div class="instruction" id="instructionText">Ban co the keo hoac chinh lai khung vuong cho dung phan Profile:</div>
+  <div class="instruction" id="instructionText">Keo cac goc de chinh khung CHU NHAT bao tron phan Profile:</div>
   <div class="crop-container" id="cropContainer">
     <img id="imageToCrop" src="" alt="Crop Target">
   </div>
@@ -70,7 +71,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
-  // Chuan API URL giong het file quan ly tep cua ban
   const API_URL = "https://api-upload.digitalsmod.workers.dev";
   let cropper = null;
 
@@ -92,12 +92,24 @@
         cropper.destroy();
       }
 
+      // Khoi tao Cropper ho tro hinh CHU NHAT linh hoat va khong bi ghen ty le
       cropper = new Cropper(imageElement, {
-        aspectRatio: 1,
-        viewMode: 1,
-        autoCropArea: 0.8,
+        aspectRatio: NaN, // Chế độ TỰ DO (Free Crop), kéo thành hình chữ nhật tùy ý
+        viewMode: 1,      // Giới hạn khung nằm gọn trong ảnh
+        autoCropArea: 0.6, // Tự động chọn 60% vùng trên của ảnh (Đúng vùng Profile)
         responsive: true,
-        background: false
+        background: false,
+        zoomable: true,
+        ready() {
+          // Tự động căn chỉnh khung hình chữ nhật nằm gọn phần trên Profile
+          const containerData = cropper.getContainerData();
+          cropper.setCropBoxData({
+            left: containerData.width * 0.05,
+            top: containerData.height * 0.05,
+            width: containerData.width * 0.9,
+            height: containerData.height * 0.45 // Lấy đúng chiều cao phần thông tin profile
+          });
+        }
       });
 
       const actionBtn = document.getElementById('actionBtn');
@@ -106,6 +118,27 @@
       actionBtn.innerText = 'Xac minh ngay';
     };
     reader.readAsDataURL(file);
+  }
+
+  // Hàm quét tự động lấy URL ảnh từ phản hồi của Worker R2
+  function extractImageUrlFromResponse(data) {
+    if (!data) return null;
+    if (typeof data === 'string' && data.startsWith('http')) return data;
+    
+    // Tìm các trường biến phổ biến
+    const possibleKeys = ['fileUrl', 'url', 'externalUrl', 'file_url', 'imageUrl', 'link', 'key', 'path'];
+    for (let key of possibleKeys) {
+      if (data[key] && typeof data[key] === 'string') {
+        if (data[key].startsWith('http')) return data[key];
+        // Nếu chỉ trả về filename/key thì ghép thành URL hoàn chỉnh
+        return `${API_URL}/${data[key]}`;
+      }
+    }
+    
+    // Nếu dữ liệu nằm trong data object con (data.data)
+    if (data.data) return extractImageUrlFromResponse(data.data);
+    
+    return null;
   }
 
   async function submitVerification() {
@@ -122,8 +155,11 @@
     statusText.style.color = '#2563eb';
     statusText.textContent = 'Dang xu ly va cat anh...';
 
-    // 1. Cat anh bang Canvas
-    const canvas = cropper.getCroppedCanvas({ width: 600, height: 600 });
+    // Cắt ảnh theo khung hình chữ nhật đã chọn
+    const canvas = cropper.getCroppedCanvas({
+      maxWidth: 800,
+      maxHeight: 800
+    });
 
     canvas.toBlob(function(blob) {
       if (!blob) {
@@ -132,12 +168,10 @@
         return;
       }
 
-      // 2. Dong goi FormData theo CHUAN CODE cua ban
       const formData = new FormData();
       formData.append("name", "Xac minh TikTok " + Date.now());
       formData.append("file", blob, "tiktok_verify.jpg");
 
-      // 3. Dung XMLHttpRequest de Upload len R2 theo endpoint /upload
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${API_URL}/upload`, true);
 
@@ -159,9 +193,11 @@
           responseJson = JSON.parse(xhr.responseText);
         } catch (_) {}
 
-        if (xhr.status >= 200 && xhr.status < 300 && responseJson && responseJson.success) {
-          // Lấy URL file vừa upload từ Worker R2
-          const uploadedImageUrl = responseJson.fileUrl || responseJson.url || responseJson.externalUrl;
+        console.log("Response tu R2 Worker:", responseJson);
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Tự động tìm URL ảnh trong kết quả trả về
+          const uploadedImageUrl = extractImageUrlFromResponse(responseJson);
 
           if (!uploadedImageUrl) {
             statusText.style.color = '#ef4444';
@@ -170,7 +206,7 @@
             return;
           }
 
-          // 4. Gui URL anh tren R2 sang Backend Vercel xac minh AI
+          // Gửi URL R2 sang Backend Vercel để AI phân tích
           try {
             const verifyRes = await fetch('/api/verify', {
               method: 'POST',
