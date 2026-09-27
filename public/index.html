@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xác Minh Theo Dõi TikTok - @digitalxiaoiu</title>
   
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -30,7 +30,6 @@
       padding: 20px;
     }
 
-    /* Loading Toàn Màn Hình */
     #page-loader {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -55,7 +54,6 @@
 
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Card Giao Diện Chính */
     .app-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -98,7 +96,6 @@
 
     .btn-main:hover { transform: translateY(-2deg); box-shadow: 0 12px 24px rgba(254, 44, 85, 0.4); }
 
-    /* Pop-up Modal */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -119,9 +116,9 @@
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 24px;
-      padding: 32px;
-      width: 90%;
-      max-width: 400px;
+      padding: 28px;
+      width: 92%;
+      max-width: 420px;
       text-align: center;
     }
 
@@ -130,7 +127,7 @@
       border: 1px solid var(--border-color);
       border-radius: 16px;
       padding: 20px;
-      margin: 20px 0;
+      margin: 16px 0;
     }
 
     .stat-number {
@@ -146,7 +143,7 @@
       gap: 6px;
       font-size: 12px;
       color: #4ade80;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .dot {
@@ -158,6 +155,46 @@
 
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 12px 0 6px 0;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-red));
+      transition: width 0.1s linear;
+    }
+
+    /* Console Box - Real System Log */
+    .console-box {
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      color: #38bdf8;
+      text-align: left;
+      height: 110px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .console-line { margin-bottom: 3px; }
+    .console-line.req { color: #38bdf8; }
+    .console-line.res { color: #4ade80; }
+    .console-line.err { color: #f87171; }
+
     .btn-tiktok {
       background: #000;
       color: white;
@@ -166,7 +203,7 @@
       border-radius: 12px;
       font-weight: 700;
       width: 100%;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       text-decoration: none;
       display: inline-block;
     }
@@ -179,10 +216,9 @@
       border-radius: 12px;
       font-weight: 700;
       width: 100%;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       cursor: pointer;
-      display: none; /* Ẩn ban đầu, chỉ hiện sau 10s */
-      transition: all 0.2s ease;
+      display: none;
     }
 
     .btn-manual:hover { background: rgba(37, 244, 238, 0.2); }
@@ -192,7 +228,7 @@
       background: transparent;
       color: var(--text-sub);
       border: none;
-      padding: 8px;
+      padding: 6px;
       font-size: 14px;
       cursor: pointer;
     }
@@ -200,13 +236,11 @@
 </head>
 <body>
 
-  <!-- Screen Loader -->
   <div id="page-loader">
     <div class="spinner"></div>
-    <p style="margin-top: 16px; color: var(--text-sub); font-size: 14px;">Đang khởi tạo dữ liệu...</p>
+    <p style="margin-top: 16px; color: var(--text-sub); font-size: 14px;">Đang tải dữ liệu trang...</p>
   </div>
 
-  <!-- Main App Card -->
   <div class="app-card">
     <span class="badge">TikTok Real-time</span>
     <h1>Xác Minh Theo Dõi</h1>
@@ -219,7 +253,6 @@
     </button>
   </div>
 
-  <!-- Pop-up Modal -->
   <div class="modal-overlay" id="statusModal">
     <div class="modal-card">
       <h2 style="font-size: 20px;">Trạng Thái Kênh TikTok</h2>
@@ -228,17 +261,24 @@
       <div class="stat-box">
         <p style="font-size: 12px; color: var(--text-sub); font-weight: 600; text-transform: uppercase;">Số Follower Hiện Tại</p>
         <div class="stat-number" id="modalFollowerCount">---</div>
+        
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
         <div class="live-indicator">
-          <span class="dot" id="statusDot"></span>
-          <span id="liveStatusText">Đang kiểm tra dữ liệu...</span>
+          <span class="dot"></span>
+          <span id="liveStatusText">Sẵn sàng kiểm tra...</span>
         </div>
       </div>
+
+      <!-- Real Console Box -->
+      <div class="console-box" id="consoleBox"></div>
 
       <a href="https://www.tiktok.com/@digitalxiaoiu" target="_blank" class="btn-tiktok" onclick="onUserClickFollow()">
         👉 Chuyển đến TikTok để Follow
       </a>
 
-      <!-- Nút xác minh thủ công (Hiện ra sau 10s) -->
       <button class="btn-manual" id="btnManualVerify" onclick="manualVerify()">
         🔄 Gửi yêu cầu xác minh thủ công
       </button>
@@ -250,9 +290,8 @@
   <script>
     let initialFollowerCount = null;
     let countdownTimer = null;
-    let secondsLeft = 10;
+    let progressInterval = null;
 
-    // Tắt Loader khi nạp trang xong
     window.addEventListener('load', () => {
       setTimeout(() => {
         const loader = document.getElementById('page-loader');
@@ -261,10 +300,21 @@
       }, 600);
     });
 
-    // Mở Pop-up Modal
+    // In log chuẩn kỹ thuật (Thật 100%)
+    function printRealLog(text, classType = 'req') {
+      const box = document.getElementById('consoleBox');
+      const timeStr = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+      const line = document.createElement('div');
+      line.className = `console-line ${classType}`;
+      line.innerText = `[${timeStr}] ${text}`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
     async function openStatusModal() {
       document.getElementById('statusModal').classList.add('active');
       document.getElementById('btnManualVerify').style.display = 'none';
+      document.getElementById('consoleBox').innerHTML = '';
       await fetchCurrentFollowerCount();
       startCountdown();
     }
@@ -272,41 +322,65 @@
     function closeModal() {
       document.getElementById('statusModal').classList.remove('active');
       if (countdownTimer) clearInterval(countdownTimer);
+      if (progressInterval) clearInterval(progressInterval);
     }
 
-    // Bắt đầu đếm ngược 10 giây
     function startCountdown() {
       if (countdownTimer) clearInterval(countdownTimer);
-      secondsLeft = 10;
+      if (progressInterval) clearInterval(progressInterval);
+
+      let seconds = 10;
+      let progress = 0;
+      const progressContainer = document.getElementById('progressContainer');
+      const progressBar = document.getElementById('progressBar');
       const statusText = document.getElementById('liveStatusText');
       const manualBtn = document.getElementById('btnManualVerify');
-      
+
+      progressContainer.style.display = 'block';
+      progressBar.style.width = '0%';
       manualBtn.style.display = 'none';
 
-      countdownTimer = setInterval(async () => {
-        secondsLeft--;
-        statusText.innerText = `Đang tự động kiểm tra... (${secondsLeft}s)`;
+      progressInterval = setInterval(() => {
+        progress += 1;
+        progressBar.style.width = `${progress}%`;
+        if (progress >= 100) clearInterval(progressInterval);
+      }, 100);
 
-        if (secondsLeft <= 0) {
+      countdownTimer = setInterval(async () => {
+        seconds--;
+        statusText.innerText = `Đang tự động kiểm tra... (${seconds}s)`;
+
+        if (seconds <= 0) {
           clearInterval(countdownTimer);
-          // Thực hiện kiểm tra lượt follow lần nữa khi hết 10s
+          progressContainer.style.display = 'none';
+          
           const isIncreased = await fetchCurrentFollowerCount();
 
           if (!isIncreased) {
             statusText.innerText = 'Chưa ghi nhận lượt follow mới.';
-            manualBtn.style.display = 'block'; // Hiện nút thủ công
+            manualBtn.style.display = 'block';
           }
         }
       }, 1000);
     }
 
-    // Hàm lấy số follower từ hệ thống
+    // Thực hiện Fetch thật và xuất Log thật
     async function fetchCurrentFollowerCount() {
       const display = document.getElementById('modalFollowerCount');
+      const reqUrl = `/api/get-follower-scraper?t=${Date.now()}`;
       
+      printRealLog(`GET ${reqUrl}`, 'req');
+
       try {
-        const res = await fetch('/api/get-follower-scraper');
+        const fetchStart = performance.now();
+        const res = await fetch(reqUrl);
+        const fetchEnd = performance.now();
+        const duration = Math.round(fetchEnd - fetchStart);
+
+        printRealLog(`HTTP/${res.status} ${res.statusText} (${duration}ms)`, res.ok ? 'res' : 'err');
+
         const data = await res.json();
+        printRealLog(`RESPONSE: ${JSON.stringify(data)}`, res.ok ? 'res' : 'err');
 
         if (data.success) {
           const currentCount = data.follower_count;
@@ -315,42 +389,44 @@
           if (initialFollowerCount === null) {
             initialFollowerCount = currentCount;
           } else if (currentCount > initialFollowerCount) {
-            // Xác minh thành công
             document.getElementById('liveStatusText').innerText = '🎉 Xác minh thành công! Lượt Follower đã tăng.';
             document.getElementById('liveStatusText').style.color = '#4ade80';
             document.getElementById('btnManualVerify').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            
             if (countdownTimer) clearInterval(countdownTimer);
-            alert('🎉 Xác minh thành công! Hệ thống đã ghi nhận lượt Follow mới.');
+            if (progressInterval) clearInterval(progressInterval);
+            alert('🎉 Xác minh thành công! Lượt Follower của kênh đã tăng lên.');
             return true;
+          } else if (currentCount < initialFollowerCount) {
+            initialFollowerCount = currentCount;
           }
         } else {
           display.innerText = 'Lỗi';
         }
       } catch (err) {
         display.innerText = 'Lỗi';
-        console.error(err);
+        printRealLog(`FETCH ERROR: ${err.message}`, 'err');
       }
       return false;
     }
 
-    // Khi bấm sang TikTok để Follow
     function onUserClickFollow() {
       startCountdown();
     }
 
-    // Xác minh thủ công khi bấm nút
     async function manualVerify() {
       const btn = document.getElementById('btnManualVerify');
       const statusText = document.getElementById('liveStatusText');
 
       btn.disabled = true;
-      btn.innerText = '⏳ Đang kiểm tra hệ thống...';
+      btn.innerText = '⏳ Đang gửi yêu cầu...';
       statusText.innerText = 'Đang tiến hành xác minh thủ công...';
 
       const isSuccess = await fetchCurrentFollowerCount();
 
       if (!isSuccess) {
-        alert('Hệ thống chưa thấy số lượt Follower thay đổi. Vui lòng bấm Follow trên TikTok và thử lại sau ít phút.');
+        alert('Hệ thống chưa ghi nhận biến động số Follower. Vui lòng đợi ít phút để máy chủ TikTok đồng bộ rồi bấm lại.');
       }
 
       btn.disabled = false;
