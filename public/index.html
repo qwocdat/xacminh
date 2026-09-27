@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xac Minh Follow TikTok @digitalxiaoiu</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
+    .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+    h2 { color: #121212; margin-bottom: 8px; font-size: 22px; }
+    p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
+    
+    .btn-tiktok { background-color: #fe2c55; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; width: 100%; margin-bottom: 15px; font-size: 15px; }
+    .btn-tiktok:hover { background-color: #e02649; }
+    
+    .upload-box { border: 2px dashed #ccc; border-radius: 8px; padding: 20px; cursor: pointer; margin-bottom: 15px; background: #fafafa; }
+    .upload-box:hover { border-color: #fe2c55; }
+    input[type="file"] { display: none; }
+    
+    .preview-container { margin-top: 15px; display: none; }
+    .preview-container img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+    
+    .status-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: default; }
+    .btn-verify { background-color: #1677ff; color: white; cursor: pointer; }
+    .btn-verify:disabled { background-color: #ccc; cursor: not-allowed; }
+    .btn-following { background-color: #25c974; color: white; }
+    .btn-not-following { background-color: #fe2c55; color: white; }
+    .loading { display: none; margin-top: 10px; color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Xac Minh Follow TikTok</h2>
+  <p>Nhan vao nut ben duoi de den trang TikTok <b>@digitalxiaoiu</b>, tien hanh Follow va chup lai man hinh.</p>
+
+  <a href="https://www.tiktok.com/@digitalxiaoiu" target="_blank" class="btn-tiktok">
+    Den trang TikTok @digitalxiaoiu
+  </a>
+
+  <div class="upload-box" onclick="document.getElementById('screenshotInput').click()">
+    <span id="uploadText">Bam vao dey de tai anh chup man hinh</span>
+    <input type="file" id="screenshotInput" accept="image/*" onchange="handleFileSelect(event)">
+  </div>
+
+  <div class="preview-container" id="previewContainer">
+    <p style="margin-bottom: 5px; font-weight: bold; font-size: 12px; color: #555;">Xem truuoc anh phan Profile:</p>
+    <img id="imagePreview" src="" alt="Preview">
+  </div>
+
+  <button id="actionBtn" class="status-btn btn-verify" onclick="submitVerification()" disabled>
+    Xac minh ngay
+  </button>
+  
+  <div class="loading" id="loadingText">Dang phan tich anh bang Gemma 3 27B IT, vui long cho...</div>
+</div>
+
+<script>
+  let rawBase64 = null;
+
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('uploadText').innerText = 'Da chon: ' + file.name;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      rawBase64 = e.target.result;
+
+      document.getElementById('imagePreview').src = rawBase64;
+      document.getElementById('previewContainer').style.display = 'block';
+
+      const actionBtn = document.getElementById('actionBtn');
+      actionBtn.disabled = false;
+      actionBtn.className = 'status-btn btn-verify';
+      actionBtn.innerText = 'Xac minh ngay';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function submitVerification() {
+    if (!rawBase64) return;
+
+    const actionBtn = document.getElementById('actionBtn');
+    const loadingText = document.getElementById('loadingText');
+
+    actionBtn.disabled = true;
+    loadingText.style.display = 'block';
+
+    try {
+      const response = await fetch('/api/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ imageBase64: rawBase64 })
+      });
+
+      const resData = await response.json();
+      loadingText.style.display = 'none';
+
+      if (resData.success && resData.data) {
+        const { is_correct_account, is_following, reason } = resData.data;
+
+        if (is_correct_account && is_following) {
+          actionBtn.className = 'status-btn btn-following';
+          actionBtn.innerText = 'DA FOLLOW';
+        } else {
+          actionBtn.className = 'status-btn btn-not-following';
+          actionBtn.innerText = 'CHUA FOLLOW';
+          alert('Chua hoan thanh xac minh: ' + reason);
+        }
+      } else {
+        alert(resData.message || 'Xac minh that bai.');
+        actionBtn.disabled = false;
+      }
+    } catch (error) {
+      console.error(error);
+      loadingText.style.display = 'none';
+      alert('Loi ket noi den may chu.');
+      actionBtn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
